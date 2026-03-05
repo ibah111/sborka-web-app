@@ -1,14 +1,65 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
+import CircularProgress from "@mui/material/CircularProgress";
 import CollapsibleHeader from "./components/CollapsibleHeader";
 import BrowserInfoPanel from "./components/BrowserInfoPanel";
 
 export default function Home() {
+  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = React.useState(true);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    async function checkSession() {
+      try {
+        const res = await fetch("/api/auth/session", {
+          method: "GET",
+          credentials: "same-origin",
+        });
+
+        if (!res.ok) {
+          router.replace("/login");
+          return;
+        }
+
+        if (isMounted) {
+          setCheckingAuth(false);
+        }
+      } catch {
+        router.replace("/login");
+      }
+    }
+
+    checkSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
+
+  if (checkingAuth) {
+    return (
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          bgcolor: "grey.100",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{

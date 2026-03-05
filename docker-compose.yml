@@ -1,0 +1,33 @@
+services:
+  next_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sborka-web-app
+    environment:
+      - NODE_ENV=production
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+
+      # Основной сайт на домене
+      - "traefik.http.routers.site.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.site.entrypoints=websecure"
+      - "traefik.http.routers.site.tls.certresolver=le"
+      - "traefik.http.services.site.loadbalancer.server.port=3000"
+
+      # HTTP -> HTTPS
+      - "traefik.http.routers.site-http.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.site-http.entrypoints=web"
+      - "traefik.http.routers.site-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+      # На всякий случай: приоритет ниже, чем /traefik
+      - "traefik.http.routers.site.priority=1"
+    restart: unless-stopped
+
+networks:
+  web:
+    external: true
+    name: web

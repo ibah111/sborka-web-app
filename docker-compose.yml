@@ -6,33 +6,15 @@ services:
     container_name: sborka-web-app
     environment:
       - NODE_ENV=production
-      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://back-office-auth:3001}
+      - PORT=3050
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:3001}
+    ports:
+      - "${NEXT_PUBLIC_PORT:-3050}:3050"
     networks:
-      - web
       - ibahbalezin-net
-    labels:
-      - "traefik.enable=true"
-
-      # Основной сайт на домене
-      - "traefik.http.routers.site.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/`)"
-      - "traefik.http.routers.site.entrypoints=websecure"
-      - "traefik.http.routers.site.tls.certresolver=le"
-      - "traefik.http.services.site.loadbalancer.server.port=3000"
-
-      # HTTP -> HTTPS
-      - "traefik.http.routers.site-http.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/`)"
-      - "traefik.http.routers.site-http.entrypoints=web"
-      - "traefik.http.routers.site-http.middlewares=redirect-to-https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-
-      # На всякий случай: приоритет ниже, чем /traefik
-      - "traefik.http.routers.site.priority=1"
     restart: unless-stopped
 
 networks:
-  web:
-    external: true
-    name: web
   ibahbalezin-net:
+    external: true
     name: ibahbalezin-net
-    driver: bridge

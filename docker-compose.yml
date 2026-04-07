@@ -6,10 +6,14 @@ services:
     container_name: sborka-web-app
     environment:
       - NODE_ENV=production
-      - PORT=3050
+      - PORT=30121
+      - HOSTNAME=0.0.0.0
       - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:3001}
+      - AUTH_SERVICE_FALLBACK_URL=${AUTH_SERVICE_FALLBACK_URL:-http://host.docker.internal:30111}
     ports:
-      - "${NEXT_PUBLIC_PORT:-3050}:3050"
+      - "${NEXT_PUBLIC_PORT:-30121}:30121"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - ibahbalezin-net
     restart: unless-stopped

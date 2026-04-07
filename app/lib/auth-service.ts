@@ -15,35 +15,46 @@ export interface AuthServiceResponse {
   ok: boolean;
   status: number;
   payload: unknown;
+  url: string;
 }
 
 function isRecord(value: unknown): value is JsonRecord {
   return typeof value === "object" && value !== null;
 }
 
-function getConfiguredBaseUrl(): string {
-  const directUrl = process.env.AUTH_SERVICE_URL?.trim();
-  if (directUrl) {
-    return directUrl.replace(/\/+$/, "");
-  }
+function normalizeBaseUrl(value: string): string {
+  return value.replace(/\/+$/, "");
+}
 
+function withProtocol(host: string): string {
+  return /^https?:\/\//i.test(host) ? host : `http://${host}`;
+}
+
+function getConfiguredBaseUrls(): string[] {
+  const directUrl = process.env.AUTH_SERVICE_URL?.trim();
+  const fallbackUrl = process.env.AUTH_SERVICE_FALLBACK_URL?.trim();
   const host = process.env.NEXT_PUBLIC_SERVER_URL?.trim();
   const port = process.env.NEXT_PUBLIC_SERVER_PORT?.trim();
 
-  if (!host) {
+  const candidates = [
+    directUrl ? normalizeBaseUrl(directUrl) : null,
+    fallbackUrl ? normalizeBaseUrl(fallbackUrl) : null,
+    host
+      ? `${normalizeBaseUrl(withProtocol(host))}${port ? `:${port}` : ""}`
+      : null,
+  ].filter((value): value is string => Boolean(value));
+
+  const uniqueCandidates = [...new Set(candidates)];
+  if (uniqueCandidates.length === 0) {
     throw new Error(
-      "AUTH_SERVICE_URL or NEXT_PUBLIC_SERVER_URL must be configured",
+      "AUTH_SERVICE_URL, AUTH_SERVICE_FALLBACK_URL or NEXT_PUBLIC_SERVER_URL must be configured",
     );
   }
 
-  const protocol = /^https?:\/\//i.test(host) ? "" : "http://";
-  const normalizedHost = `${protocol}${host}`.replace(/\/+$/, "");
-
-  return port ? `${normalizedHost}:${port}` : normalizedHost;
+  return uniqueCandidates;
 }
 
-function toServiceUrl(path: string): string {
-  const baseUrl = getConfiguredBaseUrl();
+function toServiceUrl(baseUrl: string, path: string): string {
   return path.startsWith("/")
     ? `${baseUrl}${path}`
     : `${baseUrl}/${path}`;
@@ -139,32 +150,46 @@ export async function authServiceRequest(
     accessToken?: string | null;
   } = {},
 ): Promise<AuthServiceResponse> {
-  const headers = new Headers({
-    Accept: "application/json",
-  });
+  const baseUrls = getConfiguredBaseUrls();
+  let lastError: unknown = null;
 
-  if (init.body !== undefined) {
-    headers.set("Content-Type", "application/json");
+  for (const baseUrl of baseUrls) {
+    const headers = new Headers({
+      Accept: "application/json",
+    });
+
+    if (init.body !== undefined) {
+      headers.set("Content-Type", "application/json");
+    }
+
+    if (init.accessToken) {
+      headers.set("Authorization", `Bearer ${init.accessToken}`);
+    }
+
+    const url = toServiceUrl(baseUrl, path);
+
+    try {
+      const response = await fetch(url, {
+        method: init.method ?? "GET",
+        headers,
+        body: init.body === undefined ? undefined : JSON.stringify(init.body),
+        cache: "no-store",
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      return {
+        ok: response.ok,
+        status: response.status,
+        payload,
+        url,
+      };
+    } catch (error) {
+      lastError = error;
+    }
   }
 
-  if (init.accessToken) {
-    headers.set("Authorization", `Bearer ${init.accessToken}`);
-  }
-
-  const response = await fetch(toServiceUrl(path), {
-    method: init.method ?? "GET",
-    headers,
-    body: init.body === undefined ? undefined : JSON.stringify(init.body),
-    cache: "no-store",
-  });
-
-  const payload = await response.json().catch(() => null);
-
-  return {
-    ok: response.ok,
-    status: response.status,
-    payload,
-  };
+  throw lastError ?? new Error("Auth service is unavailable");
 }
 
 export async function getCookieStore() {

@@ -12,18 +12,16 @@ import Alert from "@mui/material/Alert";
 import Checkbox from "@mui/material/Checkbox";
 import InputAdornment from "@mui/material/InputAdornment";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { axiosInstance } from "../api/base-request";
-
-interface RegisterResponse {
-  success: boolean;
-  message: string;
-}
+import type { AuthActionResponse } from "../lib/auth";
+import { default_auth_values } from "../consts/auth.default.consts";
 
 export default function RegisterPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [fio, setFio] = useState(default_auth_values.fio);
+  const [email, setEmail] = useState(default_auth_values.email);
+  const [password, setPassword] = useState(default_auth_values.password);
+  const [position, setPosition] = useState(default_auth_values.position);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,26 +34,37 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await axiosInstance.post<RegisterResponse>("/api/v1/register", {
-        email,
-        password,
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fio: fio.trim(),
+          email: email.trim(),
+          password,
+          position: position.trim(),
+        }),
       });
 
-      if (!response.data.success) {
-        throw new Error(response.data.message || "Registration failed");
+      const payload = (await response
+        .json()
+        .catch(() => null)) as AuthActionResponse | null;
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message || "Ошибка регистрации");
       }
 
-      setSuccessMessage("Регистрация прошла успешно. Теперь вы можете войти.");
+      setSuccessMessage(
+        payload.message ||
+          "Регистрация прошла успешно. Теперь вы можете войти.",
+      );
 
-      // Небольшая пауза и редирект на страницу логина
       setTimeout(() => {
         router.replace("/login");
       }, 1200);
     } catch (err: unknown) {
-      const message =
-        (err as any)?.response?.data?.message?.message ||
-        (err as Error).message ||
-        "Ошибка регистрации";
+      const message = (err as Error).message || "Ошибка регистрации";
       setError(message);
     } finally {
       setLoading(false);
@@ -84,11 +93,16 @@ export default function RegisterPage() {
       >
         <Stack spacing={3}>
           <Box>
-            <Typography variant="h5" component="h1" fontWeight={600} gutterBottom>
+            <Typography
+              variant="h5"
+              component="h1"
+              fontWeight={600}
+              gutterBottom
+            >
               Регистрация
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Введите email и пароль для создания аккаунта.
+              Укажите ФИО, email, пароль и должность для создания аккаунта.
             </Typography>
           </Box>
 
@@ -106,6 +120,15 @@ export default function RegisterPage() {
 
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={2.5}>
+              <TextField
+                label="ФИО"
+                value={fio}
+                onChange={(e) => setFio(e.target.value)}
+                fullWidth
+                required
+                autoComplete="name"
+              />
+
               <TextField
                 label="Email"
                 type="email"
@@ -139,6 +162,15 @@ export default function RegisterPage() {
                 }}
               />
 
+              <TextField
+                label="Должность"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                fullWidth
+                required
+                autoComplete="organization-title"
+              />
+
               <Stack direction="row" spacing={1.5}>
                 <Button
                   type="submit"
@@ -169,4 +201,3 @@ export default function RegisterPage() {
     </Box>
   );
 }
-

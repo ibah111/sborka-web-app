@@ -6,8 +6,10 @@ services:
     container_name: sborka-web-app
     environment:
       - NODE_ENV=production
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://back-office-auth:3001}
     networks:
       - web
+      - ibahbalezin-net
     labels:
       - "traefik.enable=true"
 
@@ -31,3 +33,6 @@ networks:
   web:
     external: true
     name: web
+  ibahbalezin-net:
+    name: ibahbalezin-net
+    driver: bridge

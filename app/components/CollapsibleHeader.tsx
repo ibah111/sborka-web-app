@@ -6,9 +6,16 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Collapse from "@mui/material/Collapse";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import HealthStatus from "./HealthStatus";
 
 const APP_NAME = "Sborka Web";
+
+interface CollapsibleHeaderProps {
+  userLabel?: string;
+  onLogout?: () => void | Promise<void>;
+  loggingOut?: boolean;
+}
 
 function formatLastCheck(at: Date): string {
   return at.toLocaleString("ru-RU", {
@@ -21,7 +28,11 @@ function formatLastCheck(at: Date): string {
   });
 }
 
-export default function CollapsibleHeader() {
+export default function CollapsibleHeader({
+  userLabel,
+  onLogout,
+  loggingOut = false,
+}: CollapsibleHeaderProps) {
   const [open, setOpen] = useState(false);
   const [lastCheckAt, setLastCheckAt] = useState<Date | null>(null);
 
@@ -42,7 +53,22 @@ export default function CollapsibleHeader() {
           {APP_NAME}
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {userLabel && (
+            <Typography variant="body2" color="text.secondary">
+              {userLabel}
+            </Typography>
+          )}
           <HealthStatus onLastCheck={setLastCheckAt} />
+          {onLogout && (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => void onLogout()}
+              disabled={loggingOut}
+            >
+              {loggingOut ? "Выход..." : "Выйти"}
+            </Button>
+          )}
         </Box>
       </Toolbar>
       <Collapse in={open}>

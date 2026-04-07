@@ -6,7 +6,7 @@ import React from "react";
 
 export default function HealthcheckButton() {
   const [loading, setLoading] = React.useState(false);
-  const [value, setValue] = React.useState<any>("Healthcheck");
+  const [value, setValue] = React.useState("Healthcheck");
 
   const callback = React.useCallback(async () => {
     setLoading(true);

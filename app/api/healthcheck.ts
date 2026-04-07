@@ -6,7 +6,7 @@ export async function healthcheck(): Promise<{ message: string }> {
         const response = await axiosInstance.get("/");
         console.log("response.data: ", response.data);
         return response.data;
-    } catch (error) {
+    } catch {
         return { message: "Internal server error" };
     }
 }

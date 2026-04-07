@@ -12,23 +12,14 @@ import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 import InputAdornment from "@mui/material/InputAdornment";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { axiosInstance } from "../api/base-request";
-import { storage } from "../lib/storage";
-
-interface LoginResponse {
-  success: boolean;
-  message: string;
-  data: {
-    access_token: string;
-    refresh_token: string;
-  };
-}
+import type { AuthActionResponse } from "../lib/auth";
+import { default_auth_values } from "../consts/auth.default.consts";
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(default_auth_values.email);
+  const [password, setPassword] = useState(default_auth_values.password);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,34 +30,29 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await axiosInstance.post<LoginResponse>("/api/v1/login", {
-        email,
-        password,
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
       });
 
-      if (!response.data.success) {
-        throw new Error(response.data.message || "Login failed");
+      const payload = (await response
+        .json()
+        .catch(() => null)) as AuthActionResponse | null;
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message || "Ошибка входа");
       }
 
-      const { access_token, refresh_token } = response.data.data;
-
-      // Сохраняем токены в httpOnly cookie через внутренний API
-      await storage.httpOnlyCookie.set("access_token", access_token, {
-        maxAge: 15 * 60,
-        sameSite: "lax",
-      });
-
-      await storage.httpOnlyCookie.set("refresh_token", refresh_token, {
-        maxAge: 30 * 24 * 60 * 60,
-        sameSite: "lax",
-      });
-
       router.replace("/");
+      router.refresh();
     } catch (err: unknown) {
-      const message =
-        (err as any)?.response?.data?.message?.message ||
-        (err as Error).message ||
-        "Ошибка входа";
+      const message = (err as Error).message || "Ошибка входа";
       setError(message);
     } finally {
       setLoading(false);
@@ -95,7 +81,12 @@ export default function LoginPage() {
       >
         <Stack spacing={3}>
           <Box>
-            <Typography variant="h5" component="h1" fontWeight={600} gutterBottom>
+            <Typography
+              variant="h5"
+              component="h1"
+              fontWeight={600}
+              gutterBottom
+            >
               Вход в систему
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -174,4 +165,3 @@ export default function LoginPage() {
     </Box>
   );
 }
-

@@ -10,6 +10,8 @@ services:
       - HOSTNAME=0.0.0.0
       - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:3001}
       - AUTH_SERVICE_FALLBACK_URL=${AUTH_SERVICE_FALLBACK_URL:-http://host.docker.internal:30111}
+      - TRANSCRIBER_SERVICE_URL=${TRANSCRIBER_SERVICE_URL:-http://transcriber:8000}
+      - TRANSCRIBER_SERVICE_FALLBACK_URL=${TRANSCRIBER_SERVICE_FALLBACK_URL:-http://host.docker.internal:8000}
     ports:
       - "${NEXT_PUBLIC_PORT:-30121}:30121"
     extra_hosts:

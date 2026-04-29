@@ -13,7 +13,7 @@ FROM oven/bun:1.1 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ARG NEXT_PUBLIC_TRANSCRIBER_WS_URL=ws://localhost:8000/ws/transcribe-progress
+ARG NEXT_PUBLIC_TRANSCRIBER_WS_URL=wss://tools.sborkaweb.ru/ws/transcribe-progress
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=2048
 ENV NEXT_PUBLIC_TRANSCRIBER_WS_URL=$NEXT_PUBLIC_TRANSCRIBER_WS_URL

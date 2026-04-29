@@ -132,7 +132,7 @@ export function buildWsUrl(taskId: string): string {
   }
 
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.hostname}:8000${TRANSCRIBE_PROGRESS_WS_PATH}/${taskId}`;
+  return `${protocol}//${window.location.host}${TRANSCRIBE_PROGRESS_WS_PATH}/${taskId}`;
 }
 
 export function buildTranscriptFromSegments(segments: Map<number, string>): string {

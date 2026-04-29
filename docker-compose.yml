@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_TRANSCRIBER_WS_URL: ${NEXT_PUBLIC_TRANSCRIBER_WS_URL:-ws://localhost:${TRANSCRIBER_SERVICE_PORT:-8000}/ws/transcribe-progress}
+        NEXT_PUBLIC_TRANSCRIBER_WS_URL: ${NEXT_PUBLIC_TRANSCRIBER_WS_URL:-wss://tools.sborkaweb.ru/ws/transcribe-progress}
     network_mode: bridge
     environment:
       - NODE_ENV=production
@@ -16,7 +16,7 @@ services:
       - TRANSCRIBER_SERVICE_PORT=${TRANSCRIBER_SERVICE_PORT:-8000}
       - TRANSCRIBER_SERVICE_URL=${TRANSCRIBER_SERVICE_URL:-http://host.docker.internal:${TRANSCRIBER_SERVICE_PORT:-8000}}
       - TRANSCRIBER_SERVICE_FALLBACK_URL=${TRANSCRIBER_SERVICE_FALLBACK_URL:-http://host.docker.internal:${TRANSCRIBER_SERVICE_PORT:-8000}}
-      - NEXT_PUBLIC_TRANSCRIBER_WS_URL=${NEXT_PUBLIC_TRANSCRIBER_WS_URL:-ws://localhost:${TRANSCRIBER_SERVICE_PORT:-8000}/ws/transcribe-progress}
+      - NEXT_PUBLIC_TRANSCRIBER_WS_URL=${NEXT_PUBLIC_TRANSCRIBER_WS_URL:-wss://tools.sborkaweb.ru/ws/transcribe-progress}
     ports:
       - "${SERVICE_PORT:-30121}:30121"
     extra_hosts:

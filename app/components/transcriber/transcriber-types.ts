@@ -85,6 +85,8 @@ export type TranscriberSocketEvent =
   | ProgressChunkEvent
   | CompletedEvent;
 
+const TRANSCRIBE_PROGRESS_WS_PATH = "/ws/transcribe-progress";
+
 export function formatDateTime(value: string): string {
   const date = new Date(value);
 
@@ -120,11 +122,17 @@ export function buildWsUrl(taskId: string): string {
   const configuredBase = process.env.NEXT_PUBLIC_TRANSCRIBER_WS_URL?.trim();
 
   if (configuredBase) {
-    return `${configuredBase.replace(/\/+$/, "")}/ws/transcribe-progress/${taskId}`;
+    const normalizedBase = configuredBase.replace(/\/+$/, "");
+
+    if (normalizedBase.endsWith(TRANSCRIBE_PROGRESS_WS_PATH)) {
+      return `${normalizedBase}/${taskId}`;
+    }
+
+    return `${normalizedBase}${TRANSCRIBE_PROGRESS_WS_PATH}/${taskId}`;
   }
 
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.hostname}:8000/ws/transcribe-progress/${taskId}`;
+  return `${protocol}//${window.location.hostname}:8000${TRANSCRIBE_PROGRESS_WS_PATH}/${taskId}`;
 }
 
 export function buildTranscriptFromSegments(segments: Map<number, string>): string {

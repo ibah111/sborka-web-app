@@ -33,12 +33,14 @@ function withProtocol(host: string): string {
 function getConfiguredBaseUrls(): string[] {
   const directUrl = process.env.AUTH_SERVICE_URL?.trim();
   const fallbackUrl = process.env.AUTH_SERVICE_FALLBACK_URL?.trim();
+  const servicePort = process.env.AUTH_SERVICE_PORT?.trim() || "30111";
   const host = process.env.NEXT_PUBLIC_SERVER_URL?.trim();
   const port = process.env.NEXT_PUBLIC_SERVER_PORT?.trim();
 
   const candidates = [
     directUrl ? normalizeBaseUrl(directUrl) : null,
     fallbackUrl ? normalizeBaseUrl(fallbackUrl) : null,
+    `http://host.docker.internal:${servicePort}`,
     host
       ? `${normalizeBaseUrl(withProtocol(host))}${port ? `:${port}` : ""}`
       : null,
@@ -47,7 +49,7 @@ function getConfiguredBaseUrls(): string[] {
   const uniqueCandidates = [...new Set(candidates)];
   if (uniqueCandidates.length === 0) {
     throw new Error(
-      "AUTH_SERVICE_URL, AUTH_SERVICE_FALLBACK_URL or NEXT_PUBLIC_SERVER_URL must be configured",
+      "AUTH_SERVICE_URL, AUTH_SERVICE_FALLBACK_URL, AUTH_SERVICE_PORT or NEXT_PUBLIC_SERVER_URL must be configured",
     );
   }
 

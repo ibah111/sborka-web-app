@@ -11,7 +11,7 @@ function getConfiguredBaseUrls(): string[] {
   const candidates = [
     directUrl ? normalizeBaseUrl(directUrl) : null,
     fallbackUrl ? normalizeBaseUrl(fallbackUrl) : null,
-    "http://127.0.0.1:8000",
+    `http://host.docker.internal:${process.env.TRANSCRIBER_SERVICE_PORT?.trim() || "8000"}`,
   ].filter((value): value is string => Boolean(value));
 
   return [...new Set(candidates)];

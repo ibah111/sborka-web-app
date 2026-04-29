@@ -5,7 +5,16 @@ import {
   transcriberServiceFetch,
 } from "@/app/lib/transcriber-service";
 
-export async function GET(request: NextRequest) {
+function getSessionUserId(user: { user_id?: number | string } | null): number | null {
+  if (!user) {
+    return null;
+  }
+
+  const userId = Number(user.user_id);
+  return Number.isInteger(userId) && userId > 0 ? userId : null;
+}
+
+export async function POST(_request: NextRequest) {
   const session = await resolveAuthenticatedSession();
 
   if (!session.ok || !session.accessToken) {
@@ -15,13 +24,24 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const queryString = request.nextUrl.searchParams.toString();
-  const path = queryString ? `/transcripts?${queryString}` : "/transcripts";
+  const userId = getSessionUserId(session.user);
+  if (userId === null) {
+    return NextResponse.json(
+      { detail: "Не удалось определить user_id текущей сессии." },
+      { status: 401 },
+    );
+  }
 
   try {
-    const response = await transcriberServiceFetch(path, {
-      method: "GET",
+    const response = await transcriberServiceFetch("/transcripts", {
+      method: "POST",
       accessToken: session.accessToken,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        user_id: userId,
+      }),
     });
     const payload = await readTranscriberPayload(response);
 

@@ -121,11 +121,15 @@ export default function TranscriberTool() {
 
     try {
       const response = await fetch(
-        "/api/transcriber/transcripts?limit=20&offset=0&order_by=created_at&order_direction=desc",
+        "/api/transcriber/transcripts",
         {
-          method: "GET",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
           credentials: "same-origin",
           cache: "no-store",
+          body: JSON.stringify({}),
         },
       );
 
@@ -297,7 +301,10 @@ export default function TranscriberTool() {
     (taskId: string) => {
       closeSocket();
 
-      const socket = new WebSocket(buildWsUrl(taskId));
+      const socketUrl = buildWsUrl(taskId);
+      appendLog("INFO", `WebSocket URL: ${socketUrl}`, "transcriber.ws");
+
+      const socket = new WebSocket(socketUrl);
       websocketRef.current = socket;
 
       socket.onopen = () => {
@@ -312,13 +319,13 @@ export default function TranscriberTool() {
         appendLog("WARN", "WebSocket сообщил об ошибке соединения.", "transcriber.ws");
       };
 
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         websocketRef.current = null;
 
         if (!uploadFinishedRef.current && currentTaskIdRef.current === taskId) {
           appendLog(
             "WARN",
-            "WebSocket закрыт до завершения транскрибации.",
+            `WebSocket закрыт до завершения транскрибации. code=${event.code}`,
             "transcriber.ws",
           );
         } else {

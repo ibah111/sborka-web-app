@@ -34,6 +34,15 @@ function extractErrorDetail(rawText: string, fallback: string): string {
   return fallback;
 }
 
+function getSessionUserId(user: { user_id?: number | string } | null): number | null {
+  if (!user) {
+    return null;
+  }
+
+  const userId = Number(user.user_id);
+  return Number.isInteger(userId) && userId > 0 ? userId : null;
+}
+
 export async function POST(request: NextRequest) {
   const session = await resolveAuthenticatedSession();
 
@@ -41,6 +50,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { detail: session.message },
       { status: session.status >= 400 ? session.status : 401 },
+    );
+  }
+
+  const userId = getSessionUserId(session.user);
+  if (userId === null) {
+    return NextResponse.json(
+      { detail: "Не удалось определить user_id текущей сессии." },
+      { status: 401 },
     );
   }
 
@@ -62,6 +79,7 @@ export async function POST(request: NextRequest) {
 
   const outboundFormData = new FormData();
   outboundFormData.append("file", file, file.name);
+  outboundFormData.append("user_id", String(userId));
 
   for (const fieldName of ["task_id", "whisper_model", "whisper_device"] as const) {
     const value = incomingFormData.get(fieldName);

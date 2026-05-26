@@ -1,13 +1,18 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
+import DarkModeRoundedIcon from "@mui/icons-material/DarkModeRounded";
+import LightModeRoundedIcon from "@mui/icons-material/LightModeRounded";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Collapse from "@mui/material/Collapse";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 import HealthStatus from "./HealthStatus";
+import { useAppThemeMode } from "@/app/components/AppThemeProvider";
 
 const APP_NAME = "Sborka Web";
 
@@ -35,6 +40,7 @@ export default function CollapsibleHeader({
 }: CollapsibleHeaderProps) {
   const [open, setOpen] = useState(false);
   const [lastCheckAt, setLastCheckAt] = useState<Date | null>(null);
+  const { mode, toggleMode } = useAppThemeMode();
 
   const handleMouseEnter = useCallback(() => setOpen(true), []);
   const handleMouseLeave = useCallback(() => setOpen(false), []);
@@ -58,6 +64,22 @@ export default function CollapsibleHeader({
               {userLabel}
             </Typography>
           )}
+          <Tooltip title={mode === "dark" ? "Светлая тема" : "Тёмная тема"}>
+            <IconButton
+              size="small"
+              color="inherit"
+              onClick={toggleMode}
+              aria-label={
+                mode === "dark" ? "Включить светлую тему" : "Включить тёмную тему"
+              }
+            >
+              {mode === "dark" ? (
+                <LightModeRoundedIcon fontSize="small" />
+              ) : (
+                <DarkModeRoundedIcon fontSize="small" />
+              )}
+            </IconButton>
+          </Tooltip>
           <HealthStatus onLastCheck={setLastCheckAt} />
           {onLogout && (
             <Button

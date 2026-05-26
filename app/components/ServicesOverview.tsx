@@ -22,14 +22,16 @@ export default function ServicesOverview() {
     <Stack spacing={3}>
       <Paper
         variant="outlined"
-        sx={{
+        sx={(theme) => ({
           borderRadius: 4,
           p: { xs: 3, md: 4 },
           overflow: "hidden",
           position: "relative",
           background:
-            "linear-gradient(135deg, rgba(25,118,210,0.12) 0%, rgba(255,255,255,0.98) 54%, rgba(15,23,42,0.05) 100%)",
-        }}
+            theme.palette.mode === "dark"
+              ? "linear-gradient(135deg, rgba(25,118,210,0.22) 0%, rgba(17,24,39,0.98) 54%, rgba(148,163,184,0.08) 100%)"
+              : "linear-gradient(135deg, rgba(25,118,210,0.12) 0%, rgba(255,255,255,0.98) 54%, rgba(15,23,42,0.05) 100%)",
+        })}
       >
         <Stack spacing={2} sx={{ maxWidth: 720 }}>
           <Chip

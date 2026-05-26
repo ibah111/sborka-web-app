@@ -44,7 +44,10 @@ export default function BrowserInfoPanel() {
             overflow: "auto",
             p: 2,
             borderRadius: 1,
-            bgcolor: "grey.100",
+            bgcolor: (theme) =>
+              theme.palette.mode === "dark"
+                ? "rgba(15,23,42,0.72)"
+                : "grey.100",
             fontFamily: "monospace",
             fontSize: "0.875rem",
             color: "text.secondary",

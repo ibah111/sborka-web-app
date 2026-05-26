@@ -75,7 +75,7 @@ export default function RegisterPage() {
     <Box
       sx={{
         minHeight: "100vh",
-        bgcolor: "grey.100",
+        bgcolor: "background.default",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

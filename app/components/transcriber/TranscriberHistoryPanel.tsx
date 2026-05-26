@@ -96,7 +96,12 @@ export default function TranscriberHistoryPanel({
                     p: 2,
                     cursor: isSubmitting ? "default" : "pointer",
                     borderColor: selected ? "primary.main" : "divider",
-                    bgcolor: selected ? "rgba(25,118,210,0.08)" : "transparent",
+                    bgcolor: selected
+                      ? (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(25,118,210,0.22)"
+                            : "rgba(25,118,210,0.08)"
+                      : "transparent",
                     transition: "border-color 160ms ease, background-color 160ms ease",
                     opacity: isSubmitting ? 0.7 : 1,
                   }}

@@ -12,6 +12,7 @@ export const DEFAULT_DEVICES = ["auto", "cpu", "cuda"];
 
 export type ToolStatus =
   | "idle"
+  | "ready"
   | "connecting"
   | "transcribing"
   | "completed"
@@ -146,6 +147,8 @@ export function buildTranscriptFromSegments(segments: Map<number, string>): stri
 
 export function getStatusChipProps(status: ToolStatus) {
   switch (status) {
+    case "ready":
+      return { label: "Готов к отправке", color: "info" as const };
     case "connecting":
       return { label: "Подключение", color: "info" as const };
     case "transcribing":

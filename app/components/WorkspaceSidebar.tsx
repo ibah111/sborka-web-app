@@ -39,14 +39,16 @@ export default function WorkspaceSidebar() {
   return (
     <Paper
       variant="outlined"
-      sx={{
+      sx={(theme) => ({
         borderRadius: 4,
         p: 2,
         position: "sticky",
         top: 24,
         background:
-          "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)",
-      }}
+          theme.palette.mode === "dark"
+            ? "linear-gradient(180deg, rgba(17,24,39,0.98) 0%, rgba(15,23,42,0.98) 100%)"
+            : "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)",
+      })}
     >
       <Stack spacing={2}>
         <Box>
@@ -76,7 +78,12 @@ export default function WorkspaceSidebar() {
                   alignItems: "flex-start",
                   border: "1px solid",
                   borderColor: active ? "primary.main" : "divider",
-                  backgroundColor: active ? "rgba(25, 118, 210, 0.08)" : "transparent",
+                  backgroundColor: active
+                    ? (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(25, 118, 210, 0.22)"
+                          : "rgba(25, 118, 210, 0.08)"
+                    : "transparent",
                   py: 1.5,
                 }}
               >
@@ -101,11 +108,14 @@ export default function WorkspaceSidebar() {
         </List>
 
         <Box
-          sx={{
+          sx={(theme) => ({
             borderRadius: 3,
-            bgcolor: "rgba(15, 23, 42, 0.04)",
+            bgcolor:
+              theme.palette.mode === "dark"
+                ? "rgba(148, 163, 184, 0.08)"
+                : "rgba(15, 23, 42, 0.04)",
             p: 1.5,
-          }}
+          })}
         >
           <Typography variant="body2" fontWeight={600} gutterBottom>
             Сейчас доступно

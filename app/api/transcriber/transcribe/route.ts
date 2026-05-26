@@ -88,6 +88,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const enableDiarization = incomingFormData.get("enable_diarization") === "true";
+  outboundFormData.append("enable_diarization", String(enableDiarization));
+
   try {
     const response = await transcriberServiceFetch("/transcribe", {
       method: "POST",

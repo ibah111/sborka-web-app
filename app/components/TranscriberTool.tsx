@@ -4,13 +4,16 @@ import React, { startTransition } from "react";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
 import GraphicEqRoundedIcon from "@mui/icons-material/GraphicEqRounded";
+import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import SubtitlesRoundedIcon from "@mui/icons-material/SubtitlesRounded";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import LinearProgress from "@mui/material/LinearProgress";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
@@ -50,12 +53,14 @@ export default function TranscriberTool() {
   const [isDragActive, setIsDragActive] = React.useState(false);
   const [status, setStatus] = React.useState<ToolStatus>("idle");
   const [progressPercent, setProgressPercent] = React.useState(0);
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [selectedFileName, setSelectedFileName] = React.useState<string | null>(null);
   const [selectedFileSize, setSelectedFileSize] = React.useState<number | null>(null);
   const [models, setModels] = React.useState<string[]>(DEFAULT_MODELS);
   const [devices, setDevices] = React.useState<string[]>(DEFAULT_DEVICES);
   const [selectedModel, setSelectedModel] = React.useState("small");
   const [selectedDevice, setSelectedDevice] = React.useState("cpu");
+  const [enableDiarization, setEnableDiarization] = React.useState(false);
   const [transcriptText, setTranscriptText] = React.useState("");
   const [logs, setLogs] = React.useState<LogEntry[]>([]);
   const [transcriptions, setTranscriptions] = React.useState<TranscriptRecord[]>([]);
@@ -66,6 +71,7 @@ export default function TranscriberTool() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const statusChip = React.useMemo(() => getStatusChipProps(status), [status]);
+  const canSubmit = selectedFile !== null && !isSubmitting;
 
   const closeSocket = React.useCallback(() => {
     const socket = websocketRef.current;
@@ -374,6 +380,7 @@ export default function TranscriberTool() {
         formData.append("task_id", taskId);
         formData.append("whisper_model", selectedModel);
         formData.append("whisper_device", selectedDevice);
+        formData.append("enable_diarization", String(enableDiarization));
 
         const response = await fetch("/api/transcriber/transcribe", {
           method: "POST",
@@ -433,13 +440,14 @@ export default function TranscriberTool() {
       openSocket,
       refreshHistory,
       resetForNewRun,
+      enableDiarization,
       selectedDevice,
       selectedModel,
     ],
   );
 
   const handleFile = React.useCallback(
-    async (file: File | null) => {
+    (file: File | null) => {
       if (!file) {
         return;
       }
@@ -447,15 +455,60 @@ export default function TranscriberTool() {
       const isSupportedExtension = /\.(mp3|mp4)$/i.test(file.name);
       if (!isSupportedExtension) {
         const message = "Поддерживаются только файлы MP3 и MP4.";
+        closeSocket();
+        currentTaskIdRef.current = null;
+        uploadFinishedRef.current = true;
+        segmentMapRef.current = new Map();
+        setSelectedFile(null);
+        setSelectedFileName(null);
+        setSelectedFileSize(null);
+        setProgressPercent(0);
         setUploadError(message);
         setStatus("error");
         appendLog("ERROR", message, "transcriber.client");
         return;
       }
 
-      await runTranscription(file);
+      closeSocket();
+      currentTaskIdRef.current = null;
+      uploadFinishedRef.current = true;
+      segmentMapRef.current = new Map();
+
+      setSelectedFile(file);
+      setSelectedTranscriptId(null);
+      setSelectedFileName(file.name);
+      setSelectedFileSize(file.size);
+      setTranscriptText("");
+      setLogs([]);
+      setUploadError(null);
+      setProgressPercent(0);
+      setStatus("ready");
+      appendLog(
+        "INFO",
+        `Файл ${file.name} выбран. Настройте параметры и нажмите «Отправить».`,
+        "transcriber.client",
+      );
     },
-    [appendLog, runTranscription],
+    [appendLog, closeSocket],
+  );
+
+  const handleSubmitTranscription = React.useCallback(() => {
+    if (!selectedFile) {
+      const message = "Сначала выберите MP3 или MP4 файл.";
+      setUploadError(message);
+      setStatus("error");
+      appendLog("ERROR", message, "transcriber.client");
+      return;
+    }
+
+    void runTranscription(selectedFile);
+  }, [appendLog, runTranscription, selectedFile]);
+
+  const handleDiarizationChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setEnableDiarization(event.target.checked);
+    },
+    [],
   );
 
   const handleSelectHistoryItem = React.useCallback(
@@ -469,6 +522,7 @@ export default function TranscriberTool() {
       uploadFinishedRef.current = true;
       segmentMapRef.current = new Map();
 
+      setSelectedFile(null);
       setSelectedTranscriptId(item.id);
       setSelectedFileName(item.original_filename);
       setSelectedFileSize(null);
@@ -506,8 +560,10 @@ export default function TranscriberTool() {
         sx={{
           borderRadius: 4,
           p: { xs: 3, md: 4 },
-          background:
-            "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(25,118,210,0.08) 100%)",
+          background: (theme) =>
+            theme.palette.mode === "dark"
+              ? "linear-gradient(135deg, rgba(17,24,39,0.98) 0%, rgba(25,118,210,0.18) 100%)"
+              : "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(25,118,210,0.08) 100%)",
         }}
       >
         <Stack spacing={2.5}>
@@ -550,7 +606,8 @@ export default function TranscriberTool() {
               display: "grid",
               gridTemplateColumns: {
                 xs: "1fr",
-                md: "repeat(2, minmax(0, 220px)) auto",
+                md: "repeat(2, minmax(0, 1fr))",
+                xl: "repeat(2, minmax(0, 220px)) minmax(0, 260px) auto",
               },
               gap: 2,
               alignItems: "center",
@@ -585,6 +642,25 @@ export default function TranscriberTool() {
                 </MenuItem>
               ))}
             </TextField>
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                minHeight: 56,
+              }}
+            >
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={enableDiarization}
+                    onChange={handleDiarizationChange}
+                    disabled={isSubmitting}
+                  />
+                }
+                label="Разделение на спикеров"
+              />
+            </Box>
 
             <Box
               sx={{
@@ -639,17 +715,21 @@ export default function TranscriberTool() {
                   }
 
                   const file = event.dataTransfer.files?.[0] ?? null;
-                  void handleFile(file);
+                  handleFile(file);
                 }}
                 onClick={handleBrowseClick}
-                sx={{
+                sx={(theme) => ({
                   minHeight: 260,
                   borderRadius: 4,
                   border: "2px dashed",
                   borderColor: isDragActive ? "primary.main" : "divider",
                   backgroundColor: isDragActive
-                    ? "rgba(25,118,210,0.08)"
-                    : "rgba(15,23,42,0.02)",
+                    ? theme.palette.mode === "dark"
+                      ? "rgba(25,118,210,0.18)"
+                      : "rgba(25,118,210,0.08)"
+                    : theme.palette.mode === "dark"
+                      ? "rgba(148,163,184,0.08)"
+                      : "rgba(15,23,42,0.02)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -657,7 +737,7 @@ export default function TranscriberTool() {
                   px: 3,
                   cursor: isSubmitting ? "progress" : "pointer",
                   transition: "all 180ms ease",
-                }}
+                })}
               >
                 <Stack spacing={2} alignItems="center" sx={{ maxWidth: 520 }}>
                   <CloudUploadRoundedIcon
@@ -669,7 +749,8 @@ export default function TranscriberTool() {
                       Перетащите MP3 или MP4 сюда
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                      Или нажмите, чтобы открыть системное окно выбора файла.
+                      Или нажмите, чтобы открыть системное окно выбора файла. Обработка
+                      начнётся только после кнопки «Отправить».
                     </Typography>
                   </Box>
                   <Stack
@@ -680,6 +761,7 @@ export default function TranscriberTool() {
                     justifyContent="center"
                   >
                     <Chip label="Drag and drop" variant="outlined" />
+                    <Chip label="Ручная отправка" variant="outlined" />
                     <Chip label="Потоковый текст" variant="outlined" />
                     <Chip label="WebSocket логи" variant="outlined" />
                   </Stack>
@@ -693,11 +775,47 @@ export default function TranscriberTool() {
                       )
                     }
                     disabled={isSubmitting}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleBrowseClick();
+                    }}
                   >
-                    {isSubmitting ? "Транскрибация..." : "Выбрать файл"}
+                    {isSubmitting
+                      ? "Транскрибация..."
+                      : selectedFile
+                        ? "Заменить файл"
+                        : "Выбрать файл"}
                   </Button>
                 </Stack>
               </Box>
+
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.5}
+                alignItems={{ xs: "stretch", sm: "center" }}
+                justifyContent="space-between"
+              >
+                <Typography variant="body2" color="text.secondary">
+                  {selectedFile
+                    ? "Файл выбран. Проверьте модель, устройство и параметры перед отправкой."
+                    : "Добавьте файл через drag-and-drop или системный выбор."}
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={
+                    isSubmitting ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : (
+                      <SendRoundedIcon />
+                    )
+                  }
+                  disabled={!canSubmit}
+                  onClick={handleSubmitTranscription}
+                  sx={{ minWidth: 160 }}
+                >
+                  {isSubmitting ? "Отправка..." : "Отправить"}
+                </Button>
+              </Stack>
 
               <input
                 ref={fileInputRef}
@@ -707,7 +825,7 @@ export default function TranscriberTool() {
                 onChange={(event) => {
                   const file = event.target.files?.[0] ?? null;
                   event.currentTarget.value = "";
-                  void handleFile(file);
+                  handleFile(file);
                 }}
               />
 
@@ -739,7 +857,9 @@ export default function TranscriberTool() {
                       )}
                     </Stack>
                     <Typography variant="body2" color="text.secondary">
-                      {progressPercent}% завершено
+                      {currentTaskIdRef.current
+                        ? `${progressPercent}% завершено`
+                        : "Ожидает отправки"}
                     </Typography>
                   </Box>
                   <LinearProgress variant="determinate" value={progressPercent} />
@@ -798,13 +918,19 @@ export default function TranscriberTool() {
                   maxHeight: 220,
                   overflowY: "auto",
                   borderRadius: 3,
-                  bgcolor: "rgba(15,23,42,0.03)",
+                  bgcolor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(15,23,42,0.72)"
+                      : "rgba(15,23,42,0.03)",
                   px: 2,
                   py: 1.5,
                   fontFamily: "monospace",
                   fontSize: 12,
                   lineHeight: 1.6,
-                  color: "rgba(15,23,42,0.76)",
+                  color: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(226,232,240,0.86)"
+                      : "rgba(15,23,42,0.76)",
                 }}
               >
                 {logs.length === 0 ? (

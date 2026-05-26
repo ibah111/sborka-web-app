@@ -121,7 +121,7 @@ export default function WorkspaceShell({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          bgcolor: "grey.100",
+          bgcolor: "background.default",
         }}
       >
         <CircularProgress />
@@ -138,12 +138,14 @@ export default function WorkspaceShell({
       }}
     >
       <Box
-        sx={{
+        sx={(theme) => ({
           minHeight: "100vh",
-          bgcolor: "#eef3f8",
+          bgcolor: "background.default",
           backgroundImage:
-            "radial-gradient(circle at top left, rgba(25,118,210,0.1), transparent 32%), radial-gradient(circle at bottom right, rgba(15,23,42,0.08), transparent 28%)",
-        }}
+            theme.palette.mode === "dark"
+              ? "radial-gradient(circle at top left, rgba(25,118,210,0.18), transparent 32%), radial-gradient(circle at bottom right, rgba(148,163,184,0.12), transparent 28%)"
+              : "radial-gradient(circle at top left, rgba(25,118,210,0.1), transparent 32%), radial-gradient(circle at bottom right, rgba(15,23,42,0.08), transparent 28%)",
+        })}
       >
         <CollapsibleHeader
           userLabel={getUserLabel(user)}

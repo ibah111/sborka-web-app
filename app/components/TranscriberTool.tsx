@@ -15,12 +15,14 @@ import LinearProgress from "@mui/material/LinearProgress";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import TranscriberHistoryPanel from "@/app/components/transcriber/TranscriberHistoryPanel";
 import {
   buildTranscriptFromSegments,
   buildWsUrl,
+  DEFAULT_DIARIZATION_DEVICES,
   DEFAULT_DEVICES,
   DEFAULT_MODELS,
   extractErrorMessage,
@@ -56,6 +58,8 @@ export default function TranscriberTool() {
   const [devices, setDevices] = React.useState<string[]>(DEFAULT_DEVICES);
   const [selectedModel, setSelectedModel] = React.useState("small");
   const [selectedDevice, setSelectedDevice] = React.useState("cpu");
+  const [enableDiarization, setEnableDiarization] = React.useState(false);
+  const [selectedDiarizationDevice, setSelectedDiarizationDevice] = React.useState("auto");
   const [transcriptText, setTranscriptText] = React.useState("");
   const [logs, setLogs] = React.useState<LogEntry[]>([]);
   const [transcriptions, setTranscriptions] = React.useState<TranscriptRecord[]>([]);
@@ -298,6 +302,7 @@ export default function TranscriberTool() {
       closeSocket();
 
       const socket = new WebSocket(buildWsUrl(taskId));
+      const wsUrl = socket.url;
       websocketRef.current = socket;
 
       socket.onopen = () => {
@@ -309,20 +314,27 @@ export default function TranscriberTool() {
       };
 
       socket.onerror = () => {
-        appendLog("WARN", "WebSocket сообщил об ошибке соединения.", "transcriber.ws");
+        appendLog(
+          "WARN",
+          `WebSocket сообщил об ошибке соединения: ${wsUrl}`,
+          "transcriber.ws",
+        );
       };
 
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         websocketRef.current = null;
+        const closeDetails = `code=${event.code}${
+          event.reason ? ` reason=${event.reason}` : ""
+        }`;
 
         if (!uploadFinishedRef.current && currentTaskIdRef.current === taskId) {
           appendLog(
             "WARN",
-            "WebSocket закрыт до завершения транскрибации.",
+            `WebSocket закрыт до завершения транскрибации (${closeDetails}).`,
             "transcriber.ws",
           );
         } else {
-          appendLog("INFO", "WebSocket закрыт.", "transcriber.ws");
+          appendLog("INFO", `WebSocket закрыт (${closeDetails}).`, "transcriber.ws");
         }
       };
 
@@ -367,6 +379,8 @@ export default function TranscriberTool() {
         formData.append("task_id", taskId);
         formData.append("whisper_model", selectedModel);
         formData.append("whisper_device", selectedDevice);
+        formData.append("enable_diarization", String(enableDiarization));
+        formData.append("diarization_device", selectedDiarizationDevice);
 
         const response = await fetch("/api/transcriber/transcribe", {
           method: "POST",
@@ -426,6 +440,8 @@ export default function TranscriberTool() {
       openSocket,
       refreshHistory,
       resetForNewRun,
+      enableDiarization,
+      selectedDiarizationDevice,
       selectedDevice,
       selectedModel,
     ],
@@ -543,7 +559,7 @@ export default function TranscriberTool() {
               display: "grid",
               gridTemplateColumns: {
                 xs: "1fr",
-                md: "repeat(2, minmax(0, 220px)) auto",
+                md: "repeat(4, minmax(0, 220px)) auto",
               },
               gap: 2,
               alignItems: "center",
@@ -573,6 +589,33 @@ export default function TranscriberTool() {
               fullWidth
             >
               {devices.map((device) => (
+                <MenuItem key={device} value={device}>
+                  {device}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Switch
+                checked={enableDiarization}
+                onChange={(event) => setEnableDiarization(event.target.checked)}
+                disabled={isSubmitting}
+                inputProps={{ "aria-label": "Enable diarization" }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                Диаризация
+              </Typography>
+            </Stack>
+
+            <TextField
+              select
+              label="Diarization device"
+              value={selectedDiarizationDevice}
+              onChange={(event) => setSelectedDiarizationDevice(event.target.value)}
+              disabled={isSubmitting || !enableDiarization}
+              fullWidth
+            >
+              {DEFAULT_DIARIZATION_DEVICES.map((device) => (
                 <MenuItem key={device} value={device}>
                   {device}
                 </MenuItem>

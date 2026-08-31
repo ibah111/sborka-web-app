@@ -9,6 +9,7 @@ export const DEFAULT_MODELS = [
 ];
 
 export const DEFAULT_DEVICES = ["auto", "cpu", "cuda"];
+export const DEFAULT_DIARIZATION_DEVICES = ["auto", "cpu", "cuda"];
 
 export type ToolStatus =
   | "idle"

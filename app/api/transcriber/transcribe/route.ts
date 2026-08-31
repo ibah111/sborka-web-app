@@ -63,7 +63,13 @@ export async function POST(request: NextRequest) {
   const outboundFormData = new FormData();
   outboundFormData.append("file", file, file.name);
 
-  for (const fieldName of ["task_id", "whisper_model", "whisper_device"] as const) {
+  for (const fieldName of [
+    "task_id",
+    "whisper_model",
+    "whisper_device",
+    "enable_diarization",
+    "diarization_device",
+  ] as const) {
     const value = incomingFormData.get(fieldName);
     if (typeof value === "string" && value.trim().length > 0) {
       outboundFormData.append(fieldName, value.trim());

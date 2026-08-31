@@ -1,20 +1,22 @@
 # syntax=docker/dockerfile:1
 
 # --- deps ---
-FROM oven/bun:1.1 AS deps
+FROM oven/bun:1.3.14 AS deps
 WORKDIR /app
 
 # копируем только манифесты, чтобы кешировалось
-COPY package.json bun.lockb* ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --ignore-scripts
 
 # --- build ---
-FROM oven/bun:1.1 AS builder
+FROM oven/bun:1.3.14 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ARG NEXT_PUBLIC_TRANSCRIBER_WS_URL=""
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=2048
+ENV NEXT_PUBLIC_TRANSCRIBER_WS_URL=${NEXT_PUBLIC_TRANSCRIBER_WS_URL}
 RUN bun run build
 
 # --- runtime (Node) ---

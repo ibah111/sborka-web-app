@@ -18,6 +18,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import TranscriberHistoryPanel from "@/app/components/transcriber/TranscriberHistoryPanel";
 import {
+  applySpeakerNames,
   buildTranscriptFromSegments,
   DEFAULT_DIARIZATION_DEVICES,
   DEFAULT_DEVICES,
@@ -77,11 +78,15 @@ export default function TranscriberTool() {
   const [transcriptions, setTranscriptions] = React.useState<TranscriptRecord[]>([]);
   const [historyLoading, setHistoryLoading] = React.useState(true);
   const [historyError, setHistoryError] = React.useState<string | null>(null);
+  const [speakerNamesDraft, setSpeakerNamesDraft] = React.useState<Record<string, string>>({});
+  const [speakerNamesSaving, setSpeakerNamesSaving] = React.useState(false);
+  const [speakerNamesError, setSpeakerNamesError] = React.useState<string | null>(null);
 
   const activeProcess = activeTaskId ? processes[activeTaskId] ?? null : null;
   const shownStatus: ToolStatus = selectedHistory ? "viewing" : activeProcess?.status ?? "idle";
   const statusChip = getStatusChipProps(shownStatus);
   const transcriptText = selectedHistory?.transcript_text ?? activeProcess?.transcript ?? "";
+  const displayedTranscriptText = applySpeakerNames(transcriptText, speakerNamesDraft);
   const progressPercent = selectedHistory ? 100 : activeProcess?.progress ?? 0;
   const visibleLogs = selectedHistory
     ? [logEntry("INFO", `Открыта запись от ${formatDateTime(selectedHistory.created_at)}.`, "history")]
@@ -116,6 +121,32 @@ export default function TranscriberTool() {
       setHistoryLoading(false);
     }
   }, []);
+
+  React.useEffect(() => {
+    setSpeakerNamesDraft(selectedHistory?.speaker_names ?? {});
+    setSpeakerNamesError(null);
+  }, [selectedHistory]);
+
+  const saveSpeakerNames = React.useCallback(async () => {
+    if (!selectedHistory) return;
+    setSpeakerNamesSaving(true);
+    setSpeakerNamesError(null);
+    try {
+      const response = await fetch(`/api/transcriber/transcripts/${selectedHistory.id}/speaker-names`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ speaker_names: speakerNamesDraft }),
+      });
+      const updated = (await response.json().catch(() => null)) as TranscriptRecord | null;
+      if (!response.ok || !updated) throw new Error(extractErrorMessage(updated, "Не удалось сохранить имена спикеров."));
+      setSelectedHistory(updated);
+      setTranscriptions((items) => items.map((item) => item.id === updated.id ? updated : item));
+    } catch (error) {
+      setSpeakerNamesError(error instanceof Error ? error.message : "Не удалось сохранить имена спикеров.");
+    } finally {
+      setSpeakerNamesSaving(false);
+    }
+  }, [selectedHistory, speakerNamesDraft]);
 
   React.useEffect(() => {
     void refreshHistory();
@@ -334,7 +365,13 @@ export default function TranscriberTool() {
               <Stack direction="row" spacing={1} alignItems="center"><SubtitlesRoundedIcon color="primary" /><Typography variant="h6" fontWeight={700}>{selectedHistory?.original_filename ?? activeProcess?.fileName ?? "Текст транскрибации"}</Typography></Stack>
               {(activeProcess || selectedHistory) && <><LinearProgress variant="determinate" value={progressPercent} /><Typography variant="caption">{progressPercent}% · UUID: {activeProcess?.taskId ?? selectedHistory?.task_id}</Typography></>}
               {activeProcess?.error && <Alert severity="error">{activeProcess.error}</Alert>}
-              <TextField value={transcriptText} multiline minRows={14} maxRows={24} fullWidth placeholder="Выберите процесс или запись истории." InputProps={{ readOnly: true, sx: { fontFamily: "monospace" } }} />
+              {selectedHistory && selectedHistory.speaker_count > 0 && <Stack spacing={1} sx={{ pt: 1 }}>
+                <Typography variant="subtitle2">Спикеры: {selectedHistory.speaker_count}</Typography>
+                {Object.keys(speakerNamesDraft).sort().map((speaker) => <Stack key={speaker} direction="row" spacing={1} alignItems="center"><Chip label={speaker} size="small" /><TextField size="small" label="Отображаемое имя" value={speakerNamesDraft[speaker] ?? ""} onChange={(event) => setSpeakerNamesDraft((current) => ({ ...current, [speaker]: event.target.value }))} /></Stack>)}
+                {speakerNamesError && <Alert severity="error">{speakerNamesError}</Alert>}
+                <Box><Button size="small" variant="outlined" disabled={speakerNamesSaving} onClick={() => void saveSpeakerNames()}>{speakerNamesSaving ? "Сохранение..." : "Сохранить имена"}</Button></Box>
+              </Stack>}
+              <TextField value={displayedTranscriptText} multiline minRows={14} maxRows={24} fullWidth placeholder="Выберите процесс или запись истории." InputProps={{ readOnly: true, sx: { fontFamily: "monospace" } }} />
             </Stack>
           </Paper>
           <Paper variant="outlined" sx={{ borderRadius: 4, p: 3 }}><Typography fontWeight={700}>Логи прогресса</Typography><Box sx={{ mt: 1, maxHeight: 220, overflowY: "auto", fontFamily: "monospace", fontSize: 12 }}>{visibleLogs.length ? visibleLogs.map((entry) => <Box key={entry.id}>[{entry.at}] {entry.level} {entry.logger ?? ""}: {entry.message}</Box>) : <Typography variant="caption" color="text.secondary">События выбранного процесса появятся здесь.</Typography>}</Box></Paper>

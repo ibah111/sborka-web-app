@@ -30,6 +30,8 @@ export interface TranscriptRecord {
   whisper_model: string;
   whisper_device: string;
   transcript_text: string;
+  speaker_names: Record<string, string>;
+  speaker_count: number;
   created_at: string;
 }
 
@@ -146,6 +148,13 @@ export function buildTranscriptFromSegments(segments: Map<number, string>): stri
     .filter(Boolean)
     .join(" ")
     .replace(/\s+([,.!?;:])/g, "$1");
+}
+
+export function applySpeakerNames(text: string, speakerNames: Record<string, string>): string {
+  return text.replace(/\[(SPEAKER_[^\]]+)\]/g, (label, speaker) => {
+    const displayName = speakerNames[speaker]?.trim();
+    return displayName ? `[${displayName}]` : label;
+  });
 }
 
 export function getStatusChipProps(status: ToolStatus) {

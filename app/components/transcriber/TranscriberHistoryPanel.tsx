@@ -82,8 +82,18 @@ export default function TranscriberHistoryPanel({
             В истории пока нет сохранённых транскрибаций.
           </Typography>
         ) : (
-          <Stack spacing={1.25}>
-            {items.map((item) => {
+          <Box
+            sx={{
+              maxHeight: { xs: 360, md: 520 },
+              minHeight: 120,
+              overflowY: "auto",
+              overflowX: "hidden",
+              pr: 0.5,
+              overscrollBehavior: "contain",
+            }}
+          >
+            <Stack spacing={1.25}>
+              {items.map((item) => {
               const selected = item.id === selectedTranscriptId;
 
               return (
@@ -138,8 +148,9 @@ export default function TranscriberHistoryPanel({
                   </Stack>
                 </Paper>
               );
-            })}
-          </Stack>
+              })}
+            </Stack>
+          </Box>
         )}
       </Stack>
     </Paper>

@@ -22,7 +22,7 @@ export const workspaceServices: WorkspaceServiceDefinition[] = [
     id: "transcriber",
     href: "/transcriber",
     title: "Transcriber",
-    tagline: "MP3/MP4 -> текст c живым прогрессом",
+    tagline: "Аудио/видео -> текст с живым SSE-прогрессом",
     description:
       "Загрузка аудио и видео, потоковая транскрибация через Whisper и просмотр истории сохранённых расшифровок.",
     status: "ready",

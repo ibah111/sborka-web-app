@@ -13,6 +13,8 @@ export const DEFAULT_DIARIZATION_DEVICES = ["auto", "cpu", "cuda"];
 
 export type ToolStatus =
   | "idle"
+  | "queued"
+  | "uploading"
   | "connecting"
   | "transcribing"
   | "completed"
@@ -45,9 +47,14 @@ export interface DevicesResponse {
 }
 
 export interface TranscribeRouteResponse {
-  taskId: string | null;
-  transcriptionId: number | null;
-  transcriptText: string;
+  id: string;
+  user_id: number;
+  original_filename: string;
+  media_type: string | null;
+  status: "queued" | "processing" | "completed" | "failed";
+  error_message: string | null;
+  transcription_id: number | null;
+  created_at: string;
 }
 
 export interface LogEntry {
@@ -79,12 +86,27 @@ export interface CompletedEvent {
   task_id: string;
   transcription_id?: number;
   original_filename?: string;
+  transcript_text?: string;
 }
 
-export type TranscriberSocketEvent =
+export interface StartedEvent {
+  type: "transcribe_started";
+  task_id: string;
+  original_filename?: string;
+}
+
+export interface FailedEvent {
+  type: "transcribe_failed";
+  task_id: string;
+  detail?: string;
+}
+
+export type TranscriberProgressEvent =
   | ProgressLogEvent
   | ProgressChunkEvent
-  | CompletedEvent;
+  | CompletedEvent
+  | StartedEvent
+  | FailedEvent;
 
 export function formatDateTime(value: string): string {
   const date = new Date(value);
@@ -117,17 +139,6 @@ export function formatBytes(size: number): string {
   return `${value.toFixed(value >= 10 || power === 0 ? 0 : 1)} ${units[power]}`;
 }
 
-export function buildWsUrl(taskId: string): string {
-  const configuredBase = process.env.NEXT_PUBLIC_TRANSCRIBER_WS_URL?.trim();
-
-  if (configuredBase) {
-    return `${configuredBase.replace(/\/+$/, "")}/ws/transcribe-progress/${taskId}`;
-  }
-
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.hostname}:8000/ws/transcribe-progress/${taskId}`;
-}
-
 export function buildTranscriptFromSegments(segments: Map<number, string>): string {
   return [...segments.entries()]
     .sort(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
@@ -141,6 +152,10 @@ export function getStatusChipProps(status: ToolStatus) {
   switch (status) {
     case "connecting":
       return { label: "Подключение", color: "info" as const };
+    case "queued":
+      return { label: "В очереди", color: "info" as const };
+    case "uploading":
+      return { label: "Загрузка", color: "info" as const };
     case "transcribing":
       return { label: "Транскрибация", color: "warning" as const };
     case "completed":
@@ -175,23 +190,4 @@ export function extractErrorMessage(payload: unknown, fallback: string): string 
   }
 
   return fallback;
-}
-
-export async function waitForSocketReady(socket: WebSocket): Promise<void> {
-  if (socket.readyState === WebSocket.OPEN) {
-    return;
-  }
-
-  await new Promise<void>((resolve) => {
-    const timeoutId = window.setTimeout(resolve, 1200);
-
-    const handleReady = () => {
-      window.clearTimeout(timeoutId);
-      resolve();
-    };
-
-    socket.addEventListener("open", handleReady, { once: true });
-    socket.addEventListener("error", handleReady, { once: true });
-    socket.addEventListener("close", handleReady, { once: true });
-  });
 }

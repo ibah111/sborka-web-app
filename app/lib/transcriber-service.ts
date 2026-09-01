@@ -5,13 +5,19 @@ function normalizeBaseUrl(value: string): string {
 }
 
 function getConfiguredBaseUrls(): string[] {
-  const directUrl = process.env.TRANSCRIBER_SERVICE_URL?.trim();
-  const fallbackUrl = process.env.TRANSCRIBER_SERVICE_FALLBACK_URL?.trim();
+  const directUrl = process.env.TRANSCRIBER_GATEWAY_URL?.trim();
+  const authServiceUrl = process.env.AUTH_SERVICE_URL?.trim();
+  const fallbackAuthServiceUrl = process.env.AUTH_SERVICE_FALLBACK_URL?.trim();
 
   const candidates = [
     directUrl ? normalizeBaseUrl(directUrl) : null,
-    fallbackUrl ? normalizeBaseUrl(fallbackUrl) : null,
-    "http://127.0.0.1:8000",
+    authServiceUrl
+      ? `${normalizeBaseUrl(authServiceUrl)}/api/v1/gateway/transcriber`
+      : null,
+    fallbackAuthServiceUrl
+      ? `${normalizeBaseUrl(fallbackAuthServiceUrl)}/api/v1/gateway/transcriber`
+      : null,
+    "http://127.0.0.1:30001/api/v1/gateway/transcriber",
   ].filter((value): value is string => Boolean(value));
 
   return [...new Set(candidates)];

@@ -97,23 +97,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const rawTranscriptionId = response.headers.get("X-Transcription-ID");
-    const parsedTranscriptionId = rawTranscriptionId ? Number(rawTranscriptionId) : null;
-    const incomingTaskId = incomingFormData.get("task_id");
-
-    return NextResponse.json(
-      {
-        taskId:
-          response.headers.get("X-Task-ID") ??
-          (typeof incomingTaskId === "string" ? incomingTaskId : null),
-        transcriptionId:
-          typeof parsedTranscriptionId === "number" && Number.isFinite(parsedTranscriptionId)
-            ? parsedTranscriptionId
-            : null,
-        transcriptText: rawText,
-      },
-      { status: response.status },
-    );
+    const payload = JSON.parse(rawText) as unknown;
+    return NextResponse.json(payload, { status: response.status });
   } catch {
     return NextResponse.json(
       { detail: "Не удалось связаться с transcriber service." },

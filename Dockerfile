@@ -13,10 +13,8 @@ FROM oven/bun:1.3.14 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ARG NEXT_PUBLIC_TRANSCRIBER_WS_URL=""
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=2048
-ENV NEXT_PUBLIC_TRANSCRIBER_WS_URL=${NEXT_PUBLIC_TRANSCRIBER_WS_URL}
 RUN bun run build
 
 # --- runtime (Node) ---
@@ -29,5 +27,5 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-EXPOSE ${PORT:-30121}
+EXPOSE ${PORT:-30002}
 CMD ["node", "server.js"]

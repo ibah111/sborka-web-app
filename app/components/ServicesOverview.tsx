@@ -45,7 +45,7 @@ export default function ServicesOverview() {
             </Typography>
             <Typography variant="body1" color="text.secondary">
               Здесь собраны инструменты, доступные после авторизации. Сейчас в
-              работу выведен `Transcriber`: он принимает MP3/MP4, показывает
+              работу выведен `Transcriber`: он принимает аудио/видео, показывает
               живой текст во время обработки и сохраняет историю всех
               транскрибаций пользователя.
             </Typography>
@@ -103,7 +103,7 @@ export default function ServicesOverview() {
 
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                   <Chip label="Drag and drop" variant="outlined" />
-                  <Chip label="WebSocket progress" variant="outlined" />
+                  <Chip label="SSE progress" variant="outlined" />
                   <Chip label="История пользователя" variant="outlined" />
                 </Stack>
 

@@ -6,14 +6,13 @@ services:
     container_name: sborka-web-app
     environment:
       - NODE_ENV=production
-      - PORT=30121
+      - PORT=30002
       - HOSTNAME=0.0.0.0
-      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:3001}
-      - AUTH_SERVICE_FALLBACK_URL=${AUTH_SERVICE_FALLBACK_URL:-http://host.docker.internal:30111}
-      - TRANSCRIBER_SERVICE_URL=${TRANSCRIBER_SERVICE_URL:-http://transcriber:8000}
-      - TRANSCRIBER_SERVICE_FALLBACK_URL=${TRANSCRIBER_SERVICE_FALLBACK_URL:-http://host.docker.internal:8000}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:30001}
+      - AUTH_SERVICE_FALLBACK_URL=${AUTH_SERVICE_FALLBACK_URL:-http://host.docker.internal:30001}
+      - TRANSCRIBER_GATEWAY_URL=${TRANSCRIBER_GATEWAY_URL:-http://auth-service:30001/api/v1/gateway/transcriber}
     ports:
-      - "${NEXT_PUBLIC_PORT:-30121}:30121"
+      - "${NEXT_PUBLIC_PORT:-30002}:30002"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

@@ -4,7 +4,7 @@
 
 ## Purpose and stack
 
-Full-stack web UI and backend-for-frontend for authentication, workspace navigation, transcription submission, history, and service health.
+Full-stack web UI and backend-for-frontend for authentication, workspace navigation, explicit multi-file transcription submission, UUID process monitoring, history, and service health.
 
 - Next.js 16 App Router, React 19 and TypeScript 5
 - Material UI 7 with Emotion; Tailwind CSS/PostCSS available for utility styling
@@ -33,6 +33,8 @@ sborka-web-app/
 ```
 
 `page.tsx` composes a route, `layout.tsx` owns shared route chrome, `route.ts` is an HTTP boundary, components render UI, and `lib/` files encapsulate reusable clients/session/storage behavior. Files using secrets or internal service URLs must stay server-only.
+
+Transcriber route handlers call auth-gateway only and stream SSE to the browser. Architecture decisions are recorded in `acrhitecture/decisions/`.
 
 ## Adding files
 

@@ -22,3 +22,9 @@ The workspace-level stack is available at `devops/docker-compose.yml`; run it fr
 - Keep changes narrowly scoped and preserve public contracts unless the coordinating changes are made in every affected service.
 - Run lint/build checks and `docker compose -f devops/docker-compose.yml config --quiet` before handoff.
 - Never commit `.env`, build output, caches, credentials, tokens, or browser-exposed secrets.
+
+## UI color policy
+
+- Keep the interface minimalist and use black, white, and neutral gray tones by default.
+- Do not use blue colors, blue gradients, or Material UI `primary`/`info` styling.
+- Use color only for a specific exception explicitly requested by the user. The current approved exception is violet for the main speaker's messages in the transcription chat.

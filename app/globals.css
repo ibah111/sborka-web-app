@@ -1,1 +1,8 @@
 @import "tailwindcss";
+
+@font-face { font-family: "Inter Tight"; src: local("Inter Tight"), local("Inter"); font-display: swap; }
+html, body { margin: 0; min-height: 100%; background: #fff; color: #101215; }
+body { font-family: "Inter Tight", Inter, Arial, sans-serif; }
+* { box-sizing: border-box; }
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-thumb { background: rgba(16,18,21,.18); border-radius: 999px; }

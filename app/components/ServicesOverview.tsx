@@ -27,15 +27,14 @@ export default function ServicesOverview() {
           p: { xs: 3, md: 4 },
           overflow: "hidden",
           position: "relative",
-          background:
-            "linear-gradient(135deg, rgba(25,118,210,0.12) 0%, rgba(255,255,255,0.98) 54%, rgba(15,23,42,0.05) 100%)",
+          background: "linear-gradient(135deg, #f2f2f3 0%, #ffffff 54%, #f6f6f7 100%)",
         }}
       >
         <Stack spacing={2} sx={{ maxWidth: 720 }}>
           <Chip
             icon={<AutoAwesomeRoundedIcon />}
             label="Рабочее пространство"
-            color="primary"
+            color="default"
             variant="outlined"
             sx={{ width: "fit-content" }}
           />
@@ -84,7 +83,7 @@ export default function ServicesOverview() {
                   }}
                 >
                   <Stack direction="row" spacing={1.5} alignItems="center">
-                    <GraphicEqRoundedIcon color="primary" />
+                    <GraphicEqRoundedIcon sx={{ color: "#101215" }} />
                     <Box>
                       <Typography variant="h5" fontWeight={700}>
                         {service.title}
@@ -94,7 +93,7 @@ export default function ServicesOverview() {
                       </Typography>
                     </Box>
                   </Stack>
-                  <Chip label="Доступен" color="success" />
+                  <Chip label="Доступен" />
                 </Box>
 
                 <Typography variant="body1" color="text.secondary">

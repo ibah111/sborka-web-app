@@ -121,7 +121,7 @@ export default function WorkspaceShell({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          bgcolor: "grey.100",
+          bgcolor: "#fff",
         }}
       >
         <CircularProgress />
@@ -140,9 +140,7 @@ export default function WorkspaceShell({
       <Box
         sx={{
           minHeight: "100vh",
-          bgcolor: "#eef3f8",
-          backgroundImage:
-            "radial-gradient(circle at top left, rgba(25,118,210,0.1), transparent 32%), radial-gradient(circle at bottom right, rgba(15,23,42,0.08), transparent 28%)",
+          bgcolor: "#fff",
         }}
       >
         <CollapsibleHeader
@@ -154,10 +152,10 @@ export default function WorkspaceShell({
         <Box
           component="main"
           sx={{
-            maxWidth: 1480,
-            mx: "auto",
+            width: "100%",
             px: { xs: 2, md: 3 },
-            py: 3,
+            pt: "100px",
+            pb: 4,
           }}
         >
           <Stack spacing={3}>
@@ -182,15 +180,16 @@ export default function WorkspaceShell({
               sx={{
                 display: "grid",
                 gridTemplateColumns: {
-                  xs: "1fr",
-                  lg: "280px minmax(0, 1fr)",
+                  xs: "minmax(0, 1fr)",
+                  lg: "220px minmax(0, 1fr)",
+                  xl: "334px minmax(0, 1fr) 334px",
                 },
-                gap: 3,
+                columnGap: { lg: 3 },
                 alignItems: "start",
               }}
             >
               <WorkspaceSidebar />
-              <Box sx={{ minWidth: 0 }}>{children}</Box>
+              <Box sx={{ minWidth: 0, width: "100%", gridColumn: { xs: 1, lg: 2 } }}>{children}</Box>
             </Box>
           </Stack>
         </Box>

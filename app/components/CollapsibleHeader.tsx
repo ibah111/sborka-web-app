@@ -1,102 +1,16 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
-import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
-import Collapse from "@mui/material/Collapse";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import HealthStatus from "./HealthStatus";
 
-const APP_NAME = "Sborka Web";
+interface CollapsibleHeaderProps { userLabel?: string; onLogout?: () => void | Promise<void>; loggingOut?: boolean; }
 
-interface CollapsibleHeaderProps {
-  userLabel?: string;
-  onLogout?: () => void | Promise<void>;
-  loggingOut?: boolean;
-}
-
-function formatLastCheck(at: Date): string {
-  return at.toLocaleString("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-}
-
-export default function CollapsibleHeader({
-  userLabel,
-  onLogout,
-  loggingOut = false,
-}: CollapsibleHeaderProps) {
-  const [open, setOpen] = useState(false);
-  const [lastCheckAt, setLastCheckAt] = useState<Date | null>(null);
-
-  const handleMouseEnter = useCallback(() => setOpen(true), []);
-  const handleMouseLeave = useCallback(() => setOpen(false), []);
-
-  return (
-    <AppBar
-      position="static"
-      color="default"
-      elevation={1}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      sx={{ cursor: "default" }}
-    >
-      <Toolbar sx={{ flexWrap: "wrap" }}>
-        <Typography variant="h6" component="span" sx={{ flexGrow: 1 }}>
-          {APP_NAME}
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {userLabel && (
-            <Typography variant="body2" color="text.secondary">
-              {userLabel}
-            </Typography>
-          )}
-          <HealthStatus onLastCheck={setLastCheckAt} />
-          {onLogout && (
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => void onLogout()}
-              disabled={loggingOut}
-            >
-              {loggingOut ? "Выход..." : "Выйти"}
-            </Button>
-          )}
-        </Box>
-      </Toolbar>
-      <Collapse in={open}>
-        <Box
-          sx={{
-            px: 2,
-            pb: 2,
-            pt: 0,
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 2,
-          }}
-        >
-          <Typography variant="body2" color="text.secondary">
-            Healthcheck: каждые 15 сек
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Последняя проверка:{" "}
-            {lastCheckAt ? formatLastCheck(lastCheckAt) : "—"}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Env: {process.env.NODE_ENV ?? "—"}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Build: —
-          </Typography>
-        </Box>
-      </Collapse>
-    </AppBar>
-  );
+export default function CollapsibleHeader({ onLogout, loggingOut = false }: CollapsibleHeaderProps) {
+  return <Box component="header" sx={{ position: "fixed", inset: "0 0 auto 0", zIndex: 1200, height: 84, px: { xs: 2, md: 3 }, display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "rgba(255,255,255,.96)", backdropFilter: "blur(12px)" }}>
+    <Box component="img" src="/transcriber-ui/images/sborka_logo.svg" alt="Sborka Web" sx={{ width: 160, height: 28 }} />
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <Box sx={{ width: 40, height: 40, border: "2px solid #101215", borderRadius: "50%", display: "grid", placeItems: "center" }}><Box component="img" src="/transcriber-ui/icons/user_black_icon.svg" alt="" sx={{ width: 24, height: 24 }} /></Box>
+      {onLogout && <Button onClick={() => void onLogout()} disabled={loggingOut} sx={{ color: "#101215", textTransform: "none", fontSize: 16, px: 0 }}>{loggingOut ? "Выход..." : "Выйти"}</Button>}
+    </Box>
+  </Box>;
 }

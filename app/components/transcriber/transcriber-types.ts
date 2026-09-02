@@ -21,6 +21,11 @@ export type ToolStatus =
   | "error"
   | "viewing";
 
+export interface SpeakerMetadata {
+  name: string;
+  main_speaker: boolean;
+}
+
 export interface TranscriptRecord {
   id: number;
   user_id: number;
@@ -30,7 +35,7 @@ export interface TranscriptRecord {
   whisper_model: string;
   whisper_device: string;
   transcript_text: string;
-  speaker_names: Record<string, string>;
+  speaker_names: Record<string, SpeakerMetadata>;
   speaker_count: number;
   created_at: string;
 }
@@ -89,6 +94,8 @@ export interface CompletedEvent {
   transcription_id?: number;
   original_filename?: string;
   transcript_text?: string;
+  speaker_names?: Record<string, SpeakerMetadata>;
+  speaker_count?: number;
 }
 
 export interface StartedEvent {
@@ -150,9 +157,9 @@ export function buildTranscriptFromSegments(segments: Map<number, string>): stri
     .replace(/\s+([,.!?;:])/g, "$1");
 }
 
-export function applySpeakerNames(text: string, speakerNames: Record<string, string>): string {
+export function applySpeakerNames(text: string, speakerNames: Record<string, SpeakerMetadata>): string {
   return text.replace(/\[(SPEAKER_[^\]]+)\]/g, (label, speaker) => {
-    const displayName = speakerNames[speaker]?.trim();
+    const displayName = speakerNames[speaker]?.name?.trim();
     return displayName ? `[${displayName}]` : label;
   });
 }

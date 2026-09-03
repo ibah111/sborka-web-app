@@ -66,9 +66,7 @@ export async function POST(request: NextRequest) {
   for (const fieldName of [
     "task_id",
     "whisper_model",
-    "whisper_device",
     "enable_diarization",
-    "diarization_device",
   ] as const) {
     const value = incomingFormData.get(fieldName);
     if (typeof value === "string" && value.trim().length > 0) {

@@ -10,7 +10,6 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
-import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
@@ -21,14 +20,11 @@ import TranscriberHistoryPanel from "@/app/components/transcriber/TranscriberHis
 import {
   applySpeakerNames,
   buildTranscriptFromSegments,
-  DEFAULT_DIARIZATION_DEVICES,
-  DEFAULT_DEVICES,
   DEFAULT_MODELS,
   extractErrorMessage,
   formatBytes,
   formatDateTime,
   getStatusChipProps,
-  type DevicesResponse,
   type LogEntry,
   type ModelsResponse,
   type SpeakerMetadata,
@@ -79,11 +75,8 @@ export default function TranscriberTool() {
   const [isDragActive, setIsDragActive] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [models, setModels] = React.useState<string[]>(DEFAULT_MODELS);
-  const [devices, setDevices] = React.useState<string[]>(DEFAULT_DEVICES);
   const [selectedModel, setSelectedModel] = React.useState("small");
-  const [selectedDevice, setSelectedDevice] = React.useState("cpu");
   const [enableDiarization, setEnableDiarization] = React.useState(false);
-  const [selectedDiarizationDevice, setSelectedDiarizationDevice] = React.useState("auto");
   const [processes, setProcesses] = React.useState<Record<string, ProcessView>>({});
   const [activeTaskId, setActiveTaskId] = React.useState<string | null>(null);
   const [selectedHistory, setSelectedHistory] = React.useState<TranscriptRecord | null>(null);
@@ -166,12 +159,9 @@ export default function TranscriberTool() {
     void refreshHistory();
     void Promise.all([
       fetch("/api/transcriber/models", { cache: "no-store" }),
-      fetch("/api/transcriber/devices", { cache: "no-store" }),
-    ]).then(async ([modelsResponse, devicesResponse]) => {
+    ]).then(async ([modelsResponse]) => {
       const modelsPayload = (await modelsResponse.json().catch(() => null)) as ModelsResponse | null;
-      const devicesPayload = (await devicesResponse.json().catch(() => null)) as DevicesResponse | null;
       if (modelsPayload?.whisper_models?.length) setModels(modelsPayload.whisper_models);
-      if (devicesPayload?.whisper_devices?.length) setDevices(devicesPayload.whisper_devices);
     }).catch(() => undefined);
 
     const sources = eventSourcesRef.current;
@@ -285,9 +275,7 @@ export default function TranscriberTool() {
     formData.append("file", file, file.name);
     formData.append("task_id", taskId);
     formData.append("whisper_model", selectedModel);
-    formData.append("whisper_device", selectedDevice);
     formData.append("enable_diarization", String(enableDiarization));
-    formData.append("diarization_device", selectedDiarizationDevice);
 
     try {
       const response = await fetch("/api/transcriber/transcribe", { method: "POST", body: formData });
@@ -308,7 +296,7 @@ export default function TranscriberTool() {
         error: error instanceof Error ? error.message : "Ошибка отправки.",
       }));
     }
-  }, [connectEvents, enableDiarization, selectedDevice, selectedDiarizationDevice, selectedModel, updateProcess]);
+  }, [connectEvents, enableDiarization, selectedModel, updateProcess]);
 
   const submitSelected = React.useCallback(async () => {
     if (!selectedFiles.length || isSubmitting) return;
@@ -368,7 +356,6 @@ export default function TranscriberTool() {
               <Paper elevation={0} sx={{ borderRadius: "24px", p: 2, minHeight: 170, bgcolor: "#f6f6f7", backgroundImage: "url('/transcriber-ui/images/language_stone.png')", backgroundBlendMode: "luminosity", backgroundSize: "110px", backgroundPosition: "right bottom", backgroundRepeat: "no-repeat" }}><Typography sx={{ fontWeight: 500 }}>Язык</Typography><Typography sx={{ mt: .5, fontSize: 12, color: "rgba(16,18,21,.5)" }}>Определится автоматически</Typography></Paper>
               <Paper elevation={0} sx={{ borderRadius: "24px", p: 2, minHeight: 170, bgcolor: "#f6f6f7", backgroundImage: "url('/transcriber-ui/images/ai_feature_stone.png')", backgroundBlendMode: "luminosity", backgroundSize: "110px", backgroundPosition: "right bottom", backgroundRepeat: "no-repeat" }}><Typography sx={{ fontWeight: 500 }}>AI-обработка</Typography><Typography sx={{ mt: .5, fontSize: 12, color: "rgba(16,18,21,.5)" }}>Скоро</Typography></Paper>
             </Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}><TextField select size="small" label="Устройство Whisper" value={selectedDevice} onChange={(event) => setSelectedDevice(event.target.value)}>{devices.map((device) => <MenuItem key={device} value={device}>{device}</MenuItem>)}</TextField><TextField select size="small" label="Устройство диаризации" value={selectedDiarizationDevice} disabled={!enableDiarization} onChange={(event) => setSelectedDiarizationDevice(event.target.value)}>{DEFAULT_DIARIZATION_DEVICES.map((device) => <MenuItem key={device} value={device}>{device}</MenuItem>)}</TextField></Box>
             <Stack direction="row" spacing={1.5}><Button startIcon={<ArrowBackRoundedIcon />} onClick={() => setSelectedFiles([])} sx={{ flex: 1, height: 52, borderRadius: "18px", color: "#101215", bgcolor: "#f6f6f7", textTransform: "none" }}>Назад</Button><Button endIcon={<ArrowForwardRoundedIcon />} disabled={isSubmitting} onClick={() => void submitSelected()} sx={{ flex: 2, height: 52, borderRadius: "18px", color: "#fff", bgcolor: "#101215", textTransform: "none", "&:hover": { bgcolor: "#27292d" } }}>{isSubmitting ? "Загрузка…" : `Транскрибировать · ${selectedFiles.length}`}</Button></Stack>
           </>}
         </Stack> : <Stack spacing={2}>

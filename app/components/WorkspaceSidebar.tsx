@@ -8,6 +8,7 @@ import Typography from "@mui/material/Typography";
 const items = [
   { href: "/", label: "Главная", icon: "/transcriber-ui/icons/main_black_icon.svg" },
   { href: "/transcriber", label: "Транскрибатор", icon: "/transcriber-ui/icons/soundwave_black_icon.svg" },
+  { href: "/video-downloader", label: "Загрузчик видео", icon: "/transcriber-ui/icons/video_icon.svg" },
 ];
 
 export default function WorkspaceSidebar() {

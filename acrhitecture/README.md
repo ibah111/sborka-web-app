@@ -4,7 +4,7 @@
 
 ## Purpose and stack
 
-Full-stack web UI and backend-for-frontend for authentication, workspace navigation, explicit multi-file transcription submission, UUID process monitoring, history, and service health.
+Full-stack web UI and backend-for-frontend for authentication, workspace navigation, file and remote-video transcription, video downloading, UUID process monitoring, history, and service health.
 
 - Next.js 16 App Router, React 19 and TypeScript 5
 - Material UI 7 with Emotion; Tailwind CSS/PostCSS available for utility styling

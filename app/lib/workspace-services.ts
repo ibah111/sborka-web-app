@@ -1,4 +1,4 @@
-export type WorkspaceServiceId = "overview" | "transcriber";
+export type WorkspaceServiceId = "overview" | "transcriber" | "video-downloader";
 
 export interface WorkspaceServiceDefinition {
   id: WorkspaceServiceId;
@@ -25,6 +25,14 @@ export const workspaceServices: WorkspaceServiceDefinition[] = [
     tagline: "Аудио/видео -> текст с живым SSE-прогрессом",
     description:
       "Загрузка аудио и видео, потоковая транскрибация через Whisper и просмотр истории сохранённых расшифровок.",
+    status: "ready",
+  },
+  {
+    id: "video-downloader",
+    href: "/video-downloader",
+    title: "Video Downloader",
+    tagline: "YouTube / Instagram / TikTok -> видео или текст",
+    description: "Скачивание видео по ссылке с возможностью сразу запустить транскрибацию и диаризацию.",
     status: "ready",
   },
 ];

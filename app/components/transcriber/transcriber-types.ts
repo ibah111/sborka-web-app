@@ -8,8 +8,6 @@ export const DEFAULT_MODELS = [
   "large",
 ];
 
-export const DEFAULT_DEVICES = ["auto", "cpu", "cuda"];
-export const DEFAULT_DIARIZATION_DEVICES = ["auto", "cpu", "cuda"];
 
 export type ToolStatus =
   | "idle"
@@ -47,10 +45,6 @@ export interface TranscriptListResponse {
 
 export interface ModelsResponse {
   whisper_models?: string[];
-}
-
-export interface DevicesResponse {
-  whisper_devices?: string[];
 }
 
 export interface TranscribeRouteResponse {
